@@ -202,6 +202,7 @@ class GeneralizedRCNN(nn.Module):
 
         images = self.preprocess_image(batched_inputs)
         features = self.backbone(images.tensor)
+        self.save_features_as_images(features)
 
         if detected_instances is None:
             if self.proposal_generator is not None:
@@ -248,6 +249,16 @@ class GeneralizedRCNN(nn.Module):
             r = detector_postprocess(results_per_image, height, width)
             processed_results.append({"instances": r})
         return processed_results
+    
+    @staticmethod
+    def save_features_as_images(features):
+        import numpy as np
+        import cv2
+        for k, v in features.items():
+            v_ = v[:, 0].cpu().numpy()
+            v_ = (v_ / 16 + 0.5) * 255
+            v_ = np.asarray(v_.clip(0, 255), dtype=np.uint8).transpose((1, 2, 0))
+            cv2.imwrite(k + '.png', v_)
 
 
 @META_ARCH_REGISTRY.register()
